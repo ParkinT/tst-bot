@@ -1,0 +1,19 @@
+TIC-SLACK-TOE
+=============
+
+Play the classic game in SLack.
+
+
+### Set up
+
+
+![Choose 'Configure'](configure.png?raw=true)
+
+![Click 'Add Configuration'](add_configuration.png?raw=true)
+
+![Click 'Add Outgoing Webhooks](add_outgoing_webhooks_integration.png?raw=true)
+
+![Add a Custom Integration](custom_integrations.png?raw=true)
+
+![Fill in details](custom_integration_1.png?raw=true)
+I[Fill in details](custom_integration_2.png?raw=true)
