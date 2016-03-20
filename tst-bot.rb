@@ -7,11 +7,12 @@ require './game_logic'
   # rackup -o 0.0.0.0 -p 3000
 
   DEBUG = false
+  RESPONSE_TYPE = "ephemeral" # "in-channel"
   COMMANDS = "\n\ntic [move] *col* 3, *row* 2 - *new* game - *help*"
   SIGLINE = "\n:copyright: Websembly, LLC"
   SPACE = ":white_square:"
   NEW_GAME_TEXT = "Let's Play *Tic-Slack-Toe* :grey_exclamation:"
-  INTRO_TEXT = "Welcome\nThis is *not* _Your Father's Tic-Tac-Toe_\nThe grid is *4 BY 4* to present a bigger challenge.  You will always make the FIRST move.\nType `tic new` for your first game.\nGood Luck :thumbsup:"
+  INTRO_TEXT = "Welcome\nThis is *not* _Your Father's Tic-Tac-Toe_\nThe grid is *4 BY 4* to present a bigger challenge.\nYou will always make the FIRST move.\nI will make a move after you.\nYou can return to the game *at any time* and it will be where we left off; Type `tic` to view the board without making a move.\nType `tic new` for your first game.\nGood Luck :thumbsup:"
 
   HELP_TEXT = "new game - to start a new game ( you will lose your previous progress)\ncol n row n - to indicate where you play your mark"
 
@@ -54,7 +55,7 @@ require './game_logic'
       puts "NEW PLAYER" if DEBUG  # first time for this player
       #setup the player
       @redis.LPUSH user_identity, "0","0", "0", "0", "0","0", "0", "0", "0","0", "0", "0", "0","0", "0", "0"
-      return {:username => 'Tic-Slack-Toe', :response_type => "in-channel", :text => "#{INTRO_TEXT}" }.to_json
+      return {:username => 'Tic-Slack-Toe', :response_type => RESPONSE_TYPE, :text => "#{INTRO_TEXT}" }.to_json
     end
 
     new_game = false  #flag to prevent bot from making a move on the first turn
@@ -83,18 +84,18 @@ require './game_logic'
         @redis.DEL user_identity
       when "mov", "col", "row"
         if commands.nil? || values.nil?
-          return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => "Incorrect or incomplete command\n#{HELP_TEXT}" }.to_json
+          return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => "Incorrect or incomplete command\n#{HELP_TEXT}" }.to_json
         elsif commands.size == 3 && values.size == 3
           commands[0..-1].each_with_index do |command, idx|
             marks.store((command[0,3].downcase).to_sym, values[idx].to_i)
           end
-          return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => "Incorrect or incomplete command\n#{HELP_TEXT}" }.to_json if marks.empty? || marks.size != 2
-          return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => "Incorrect or incomplete command\n#{HELP_TEXT}" }.to_json if marks[:col].abs > COLS_MAX || marks[:row].abs > ROWS_MAX
+          return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => "Incorrect or incomplete command\n#{HELP_TEXT}" }.to_json if marks.empty? || marks.size != 2
+          return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => "Incorrect or incomplete command\n#{HELP_TEXT}" }.to_json if marks[:col].abs > COLS_MAX || marks[:row].abs > ROWS_MAX
         else
-          return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => ":interrobang:\n#{HELP_TEXT}" }.to_json
+          return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => ":interrobang:\n#{HELP_TEXT}" }.to_json
         end
       when "hel"
-        return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => ":question:\n#{HELP_TEXT}" }.to_json
+        return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => ":question:\n#{HELP_TEXT}" }.to_json
       end
     else
       show_board_only = true
@@ -126,7 +127,7 @@ require './game_logic'
       if user_board[mark_at].to_i != 0 # but ONLY if it is empty
          @redis.RPUSH user_identity, user_board #save the board because we are about to bail out
          @redis.LTRIM user_identity, "0", 15  #maintain only the most recent 16 items
-         return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => "Invalid Space\nRow: #{marks[:row]}/Col: #{marks[:col]} already occupied\nTry again\nrow n col n" }.to_json
+         return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => "Invalid Space\nRow: #{marks[:row]}/Col: #{marks[:col]} already occupied\nTry again\nrow n col n" }.to_json
       end
       user_board[mark_at] = "1"  #user emoji
     end unless marks.empty?
@@ -182,16 +183,16 @@ require './game_logic'
     board_grid = "#{cell_aa}#{vertical_break}#{cell_ab}#{vertical_break}#{cell_ac}#{vertical_break}#{cell_ad}\n#{horizontal_break}\n#{cell_ba}#{vertical_break}#{cell_bb}#{vertical_break}#{cell_bc}#{vertical_break}#{cell_bd}\n#{horizontal_break}\n#{cell_ca}#{vertical_break}#{cell_cb}#{vertical_break}#{cell_cc}#{vertical_break}#{cell_cd}\n#{horizontal_break}\n#{cell_da}#{vertical_break}#{cell_db}#{vertical_break}#{cell_dc}#{vertical_break}#{cell_dd}\n"
 
 
-    return {:username => "Tic-Slack-Toe", :response_type => "in-channel", :text => "The game is a *DRAW*\nGood work #{user_name}\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json unless continue_game #check for a draw
+    return {:username => "Tic-Slack-Toe", :response_type => RESPONSE_TYPE, :text => "The game is a *DRAW*\nGood work #{user_name}\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json unless continue_game #check for a draw
 
     @redis.RPUSH( user_identity, "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0") unless winner == 0 # create an empty user board if there was a win
     case winner
     when 1
-      return {:username => 'Tic-Slack-Toe', :response_type => "in-channel", :text => "You have WON #{user_name}!:medal:\n\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json if winner == 1
+      return {:username => 'Tic-Slack-Toe', :response_type => RESPONSE_TYPE, :text => "\n---\nYou have WON #{user_name}!:medal:\n\n---\n\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json if winner == 1
     when 2
-      return {:username => 'Tic-Slack-Toe', :response_type => "in-channel", :text => "I won.  But it was *very* close,#{user_name}!:chart_with_upward_trend:\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json
+      return {:username => 'Tic-Slack-Toe', :response_type => RESPONSE_TYPE, :text => "I won.  But it was *very* close,#{user_name}!:chart_with_upward_trend:\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json
     else
-      return {:username => 'Tic-Slack-Toe', :response_type => "in-channel", :text => "#{pre_text}\nYour move: #{user_name}\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json
+      return {:username => 'Tic-Slack-Toe', :response_type => RESPONSE_TYPE, :text => "#{pre_text}\nYour move: #{user_name}\n#{board_grid}#{COMMANDS}#{SIGLINE}" }.to_json
     end
 
 end
