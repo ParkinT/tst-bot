@@ -51,4 +51,5 @@ include:
   - Customizable Emoji (player and bot)
   - Option to make your [final?] game visible in the channel
   - Statistics of Wins and Losses against the bot
+  - Better UI (the game_logic needs some refactoring)
 
